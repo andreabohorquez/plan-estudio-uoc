@@ -17,10 +17,10 @@
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
   --bg:#f8fafc; --surface:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --soft:#f1f5f9;
-  --accent:#1e3a8a; --accent-ink:#ffffff;
-  --t:#0f256e; --s:#2563eb; --e:#0284c7;
-  --warn:#dc2626; --ok:#0284c7;
-  --gantt-head:#0f256e; --gantt-sub:#f1f5f9; --gantt-fase:#eff6ff; --gantt-fase-ink:#0f256e; --gantt-bar:#7dd3fc; --gantt-now:rgba(37,99,235,0.06);
+  --accent:#0f256e; --accent-ink:#ffffff;
+  --t:#0f256e; --s:#2563eb; --e:#64748b;
+  --warn:#dc2626; --ok:#1e3a8a;
+  --gantt-head:#0f256e; --gantt-sub:#f1f5f9; --gantt-fase:#eff6ff; --gantt-fase-ink:#0f256e; --gantt-bar:#93c5fd; --gantt-now:rgba(37,99,235,0.06);
   --f-display:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   --f-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   --f-mono:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
@@ -29,18 +29,18 @@
   :root:not([data-theme="light"]){
     --bg:#0b0f19; --surface:#111827; --ink:#f8fafc; --muted:#94a3b8; --line:#1e293b; --soft:#1e293b;
     --accent:#60a5fa; --accent-ink:#0b0f19;
-    --t:#93c5fd; --s:#60a5fa; --e:#38bdf8;
-    --warn:#f87171; --ok:#38bdf8;
-    --gantt-head:#1e3a8a; --gantt-sub:#1e293b; --gantt-fase:#172554; --gantt-fase-ink:#bfdbfe; --gantt-bar:#0369a1; --gantt-now:rgba(96,165,250,0.08);
+    --t:#3b82f6; --s:#93c5fd; --e:#64748b;
+    --warn:#f87171; --ok:#60a5fa;
+    --gantt-head:#1e3a8a; --gantt-sub:#1e293b; --gantt-fase:#172554; --gantt-fase-ink:#bfdbfe; --gantt-bar:#1d4ed8; --gantt-now:rgba(96,165,250,0.08);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0b0f19; --surface:#111827; --ink:#f8fafc; --muted:#94a3b8; --line:#1e293b; --soft:#1e293b;
   --accent:#60a5fa; --accent-ink:#0b0f19;
-  --t:#93c5fd; --s:#60a5fa; --e:#38bdf8;
-  --warn:#f87171; --ok:#38bdf8;
-  --gantt-head:#1e3a8a; --gantt-sub:#1e293b; --gantt-fase:#172554; --gantt-fase-ink:#bfdbfe; --gantt-bar:#0369a1; --gantt-now:rgba(96,165,250,0.08);
+  --t:#3b82f6; --s:#93c5fd; --e:#64748b;
+  --warn:#f87171; --ok:#60a5fa;
+  --gantt-head:#1e3a8a; --gantt-sub:#1e293b; --gantt-fase:#172554; --gantt-fase-ink:#bfdbfe; --gantt-bar:#1d4ed8; --gantt-now:rgba(96,165,250,0.08);
   color-scheme:dark;
 }
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 56px)}
@@ -758,7 +758,7 @@ function renderWeeks(){
     if(tot===0)return;
     var isNow=(TODAY>=a&&TODAY<=b)||(wi===0&&TODAY<a);
     var dl=DELIV.filter(function(e){return e[3]>=a&&e[3]<=b&&(activeFilter==='ALL'||e[1]===activeFilter);}).map(function(e){return SUBJ[e[1]].chip+' '+e[2].split(' · ')[0];});
-    h+='<details class="week'+(isNow?' now':'')+'"'+(isNow?' open':'')+' data-week="'+wi+'"><summary><span class="wk-title"><b>Semana '+(wi+1)+' · '+short(a)+' – '+short(b)+'</b><span>'+(dl.length?'🎯 '+esc(dl.join(', ')):'Sin entregas')+'</span></span>';
+    h+='<details class="week'+(isNow?' now':'')+'"'+(isNow?' open':'')+' data-week="'+wi+'"><summary><span class="wk-title"><b>Semana '+(wi+1)+' · '+short(a)+' – '+short(b)+'</b><span>'+(dl.length?'◆ '+esc(dl.join(', ')):'Sin entregas')+'</span></span>';
     h+='<span class="load"><span class="seg" aria-hidden="true">'+['T','S','E'].map(function(s){return sum[s]?'<i class="'+s+'" style="width:'+(sum[s]/Math.max(tot,1)*100)+'%"></i>':'';}).join('')+'</span><span class="tot-h">'+hrs(tot)+'</span></span>';
     h+='<span class="wk-prog" data-wp="'+wi+'"></span></summary><div class="days">';
     w.forEach(function(d){
