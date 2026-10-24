@@ -164,6 +164,24 @@ details.block li.done .it > label{color:var(--muted);text-decoration:line-throug
 
 .notes{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
 .notes ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;max-width:72ch}
+
+/* Cronograma Visual tipo Gantt (estilo UOC) */
+.gantt-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.gantt-tabs button{font-family:var(--f-body);font-size:13px;font-weight:600;padding:6px 13px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.gantt-tabs button.active{background:#000c66;color:#ffffff;border-color:#000c66}
+.gantt-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.gantt-card h3{display:flex;align-items:center;gap:8px;font-size:16px}
+.gantt-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid #c9cedb;border-radius:6px}
+table.gantt{width:100%;min-width:760px;border-collapse:collapse;font-family:Arial,var(--f-body);font-size:13px;background:#ffffff;color:#111111}
+table.gantt th,table.gantt td{border:1px solid #d0d4e0;padding:7px 9px;vertical-align:middle}
+table.gantt thead tr.gh-top th{background:#000c66;color:#ffffff;font-weight:700;text-align:center;font-size:13.5px;border-color:#26327a}
+table.gantt thead tr.gh-sub th{background:#f0f2f8;color:#5a6275;font-weight:500;text-align:center;font-size:11.5px;padding:4px 6px;white-space:nowrap}
+table.gantt td.g-fase{background:#eaecf7;color:#000c66;font-weight:600;width:155px;vertical-align:middle;line-height:1.3}
+table.gantt td.g-tarea{background:#ffffff;color:#111111;min-width:230px;line-height:1.3}
+table.gantt td.g-tarea.milestone{color:#000c66;font-weight:700}
+table.gantt td.g-cell{width:64px;text-align:center;padding:0;background:#ffffff}
+table.gantt td.g-cell.bar{background:#66e8ff}
+table.gantt td.g-cell.ms{color:#000c66;font-size:15px;font-weight:700}
 </style>
 </head>
 <body>
@@ -182,6 +200,7 @@ details.block li.done .it > label{color:var(--muted);text-decoration:line-throug
   <nav class="jump" aria-label="Secciones">
     <a href="#hoy">Hoy</a>
     <a href="#entregas">Entregas</a>
+    <a href="#cronograma">Cronograma visual</a>
     <a href="#semanas">Semanas</a>
     <a href="#material">Material</a>
     <a href="#notas">Notas</a>
@@ -200,6 +219,19 @@ details.block li.done .it > label{color:var(--muted);text-decoration:line-throug
     <div class="sec-head"><h2>Entregas</h2><span class="muted" style="font-size:13px">Las fechas son las del aula. Cierra cada entrega un día antes cuando puedas.</span></div>
     <div class="deliv" id="deliv"></div>
     <p class="deliv-foot">Faltan por fechar: la defensa del TFM (R6, 20 puntos) no tiene fecha publicada en el aula.</p>
+  </section>
+
+  <section id="cronograma">
+    <div class="sec-head">
+      <h2>Cronograma visual por asignatura</h2>
+      <div class="gantt-tabs" id="gantt-tabs">
+        <button type="button" data-gt="ALL" class="active">Todas (3)</button>
+        <button type="button" data-gt="T">TFM</button>
+        <button type="button" data-gt="S">Estrategia corporativa</button>
+        <button type="button" data-gt="E">Entrepreneurship</button>
+      </div>
+    </div>
+    <div id="gantt-wrap" style="display:flex;flex-direction:column;gap:16px"></div>
   </section>
 
   <section id="semanas">
@@ -520,6 +552,141 @@ function renderMat(){
   document.getElementById('mat').innerHTML=h;
 }
 
+/* ---------- Cronograma visual (Gantt por asignatura) ---------- */
+var GANTT_COLS=[
+  ['Oct.','16/10 - 31/10'],
+  ['Nov.','01/11 - 15/11'],
+  ['Nov.','16/11 - 30/11'],
+  ['Dic.','01/12 - 15/12'],
+  ['Dic.','16/12 - 31/12'],
+  ['Ene.','01/01 - 15/01'],
+  ['Ene.','16/01 - 31/01'],
+  ['Feb.','01/02 - ...']
+];
+
+var GANTT_DATA={
+  T:[
+    ['1. Definición alcance TFM',[
+      ['Propuesta del TFM',[0],null],
+      ['◆ Entrega R1 (20/10/2026)',[],0]
+    ]],
+    ['2. Marco teórico y metodología',[
+      ['Marco teórico',[0,1],null],
+      ['Diseño metodológico (matriz y guion de entrevistas)',[0,1],null],
+      ['◆ Entrega R2 (10/11/2026)',[],1]
+    ]],
+    ['3. Recogida de información',[
+      ['Comparación de segmentos',[1,2],null],
+      ['Análisis documental del segmento',[2],null],
+      ['Entrevistas a 1 o 2 proveedores de Colombia',[2],null],
+      ['◆ Entrega R3 (02/12/2026)',[],3]
+    ]],
+    ['4. Conclusiones y borrador',[
+      ['Entrevistas a 2 empresas con necesidades energéticas (en Colombia)',[3,4],null],
+      ['Priorización de servicios',[4],null],
+      ['Conclusiones e introducción',[4,5],null],
+      ['◆ Entrega R4 (05/01/2027)',[],5]
+    ]],
+    ['5. Documento final',[
+      ['Revisión y documento final',[5,6],null],
+      ['◆ Entrega R5 (25/01/2027)',[],6]
+    ]],
+    ['6. Defensa',[
+      ['Preparación de la defensa',[6,7],null],
+      ['◆ Defensa R6 (desde el 28/01/2027)',[],6]
+    ]]
+  ],
+  S:[
+    ['1. Desarrollo corporativo y valor (PEC 1)',[
+      ['Módulos: Introducción, Direcciones y Métodos de desarrollo',[0,1],null],
+      ['Artículos académicos (Ansoff, Porter, Palich, Teece, Bocken, Adner, Fluidra)',[0,1],null],
+      ['Modelos de negocio y análisis del Caso Grupo Puig',[1,2],null],
+      ['Redacción y revisión final de la PEC 1',[2],null],
+      ['◆ Entrega R1 / PEC 1 (22/11/2026 · 50 pts)',[],2]
+    ]],
+    ['2. Gobierno corporativo (PEC 2)',[
+      ['Desbloqueo de enunciado y lectura de recursos (desde 23/11)',[2,3],null],
+      ['Esquema y desarrollo de la Parte 1 (Estructura de gobierno)',[3],null],
+      ['Desarrollo de la Parte 2 y redacción completa',[4],null],
+      ['Revisión, pulido y cierre final de la PEC 2',[4,5],null],
+      ['◆ Entrega R2 / PEC 2 (10/01/2027 · 50 pts)',[],5]
+    ]],
+    ['3. PEC adicional y cierre',[
+      ['Lectura de enunciado, desarrollo y cierre de PEC adicional',[6],null],
+      ['◆ Entrega PEC adicional (25/01/2027 · 50 pts)',[],6]
+    ]]
+  ],
+  E:[
+    ['1. Formación de equipo e idea (R0)',[
+      ['Lectura de recursos (Creatividad) y publicación de idea (GeoBig)',[0],null],
+      ['Acuerdo de equipo y redacción de entrega R0',[0],null],
+      ['◆ Entrega R0 (27/10/2026 · Obligatoria)',[],0]
+    ]],
+    ['2. Modelo de negocio y validación (R1)',[
+      ['Recursos R1, lienzo del modelo de negocio e hipótesis a validar',[1],null],
+      ['Segmentos, problema/solución, propuesta de valor y canales',[1,2],null],
+      ['Ingresos/costes, plan de validación, métricas y redacción R1',[2],null],
+      ['◆ Entrega R1 (01/12/2026 · 40 pts)',[],3]
+    ]],
+    ['3. Comunicación del proyecto · El pitch (R3)',[
+      ['Planteamiento, estructura, mensaje central y guion del pitch',[3,4],null],
+      ['Diseño de diapositivas y ensayos de presentación',[4],null],
+      ['◆ Entrega R3 · El pitch (22/12/2026 · 20 pts)',[],4]
+    ]],
+    ['4. Marketing, ventas y sostenibilidad (R2)',[
+      ['Lectura de recursos R2, mercado y canales',[3,4],null],
+      ['Plan de marketing, estrategia de ventas y sostenibilidad',[4,5],null],
+      ['Redacción, revisión del equipo y cierre de R2',[5,6],null],
+      ['◆ Entrega R2 (17/01/2027 · 40 pts)',[],6]
+    ]],
+    ['5. Recap, seguimiento y cierre',[
+      ['Lectura de Recap y preparación del Checkpoint síncrono',[6],null],
+      ['◆ Checkpoint síncrono (28/01/2027)',[],6],
+      ['◆ Entrega Actividad adicional (29/01/2027)',[],6]
+    ]]
+  ]
+};
+
+function renderGantt(filter){
+  filter=filter||'ALL';
+  var keys=filter==='ALL'?['T','S','E']:[filter];
+  var h='';
+  keys.forEach(function(k){
+    var phases=GANTT_DATA[k];
+    h+='<div class="gantt-card"><h3><span class="chip '+k+'">'+SUBJ[k].chip+'</span> '+esc(SUBJ[k].code+' · '+SUBJ[k].name)+'</h3>';
+    h+='<div class="gantt-scroll"><table class="gantt"><thead>';
+    h+='<tr class="gh-top"><th rowspan="2" style="width:155px">Fase</th><th rowspan="2">Tarea</th>';
+    GANTT_COLS.forEach(function(c){h+='<th>'+esc(c[0])+'</th>';});
+    h+='</tr><tr class="gh-sub">';
+    GANTT_COLS.forEach(function(c){h+='<th>'+esc(c[1])+'</th>';});
+    h+='</tr></thead><tbody>';
+    phases.forEach(function(ph){
+      var pName=ph[0],rows=ph[1];
+      rows.forEach(function(r,ri){
+        var isMs=r[2]!==null&&r[2]!==undefined;
+        h+='<tr>';
+        if(ri===0){h+='<td class="g-fase" rowspan="'+rows.length+'">'+esc(pName)+'</td>';}
+        h+='<td class="g-tarea'+(isMs?' milestone':'')+'">'+esc(r[0])+'</td>';
+        for(var ci=0;ci<GANTT_COLS.length;ci++){
+          var hasBar=r[1].indexOf(ci)!==-1;
+          var isDiamond=r[2]===ci;
+          h+='<td class="g-cell'+(hasBar?' bar':'')+(isDiamond?' ms':'')+'">'+(isDiamond?'◆':'')+'</td>';
+        }
+        h+='</tr>';
+      });
+    });
+    h+='</tbody></table></div></div>';
+  });
+  document.getElementById('gantt-wrap').innerHTML=h;
+}
+
+document.getElementById('gantt-tabs').addEventListener('click',function(ev){
+  var b=ev.target.closest('button[data-gt]');
+  if(!b)return;
+  document.querySelectorAll('#gantt-tabs button').forEach(function(x){x.classList.toggle('active',x===b);});
+  renderGantt(b.dataset.gt);
+});
+
 /* ---------- estado local + sincronización en la nube (Móvil + PC) ---------- */
 var CLOUD_URL='https://textdb.dev/api/data/uoc-plan-andrea-bohorquez-2026';
 var NTFY_TOPIC='uoc_plan_andrea_bohorquez_2026_9f8a7b';
@@ -638,7 +805,7 @@ try{
   };
 }catch(e){}
 
-renderToday();renderDeliv();renderWeeks();renderMat();paint();pullCloud();
+renderToday();renderDeliv();renderGantt();renderWeeks();renderMat();paint();pullCloud();
 })();
 </script>
 </body>
