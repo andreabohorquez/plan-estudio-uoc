@@ -520,12 +520,15 @@ function renderMat(){
   document.getElementById('mat').innerHTML=h;
 }
 
-/* ---------- estado local ---------- */
-var done=new Set();
+/* ---------- estado local + sincronización en la nube (Móvil + PC) ---------- */
+var CLOUD_URL='https://textdb.dev/api/data/uoc-plan-andrea-bohorquez-2026';
+var NTFY_TOPIC='uoc_plan_andrea_bohorquez_2026_9f8a7b';
+var CLIENT_ID=Math.random().toString(36).slice(2);
+var done=new Set(),saving=false,pending=false,timer=0;
 var saveEl=document.getElementById('save');
 function status(t){saveEl.textContent=t;}
 try{JSON.parse(localStorage.getItem('plan-tfm-done')||'[]').forEach(function(x){done.add(x);});}catch(e){}
-function saveLocal(){try{localStorage.setItem('plan-tfm-done',JSON.stringify(Array.from(done)));status('Guardado automáticamente.');}catch(e){}}
+function saveLocal(){try{localStorage.setItem('plan-tfm-done',JSON.stringify(Array.from(done)));}catch(e){}}
 
 function paint(){
   document.querySelectorAll('input[data-id]').forEach(function(c){c.checked=done.has(c.dataset.id);});
@@ -551,14 +554,91 @@ function paint(){
   renderNext();
 }
 
+function flushCloud(){
+  if(saving){pending=true;return;}
+  saving=true;
+  var arr=Array.from(done);
+  var payload=JSON.stringify(arr);
+  fetch(CLOUD_URL,{
+    method:'POST',
+    headers:{'Content-Type':'text/plain'},
+    body:payload
+  }).then(function(r){
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    status('☁️ Sincronizado (Móvil + PC)');
+    try{
+      fetch('https://ntfy.sh/',{
+        method:'POST',
+        body:JSON.stringify({topic:NTFY_TOPIC,message:JSON.stringify({cid:CLIENT_ID,done:arr})})
+      }).catch(function(){});
+    }catch(e){}
+  }).catch(function(){
+    status('Guardado en este dispositivo (sin red).');
+  }).finally(function(){
+    saving=false;
+    if(pending){pending=false;flushCloud();}
+  });
+}
+
+function queueSave(){
+  saveLocal();
+  status('☁️ Guardando en la nube…');
+  clearTimeout(timer);
+  timer=setTimeout(flushCloud,300);
+}
+
+function pullCloud(){
+  if(saving||pending)return;
+  fetch(CLOUD_URL+'?t='+Date.now(),{cache:'no-store'}).then(function(r){
+    return r.text();
+  }).then(function(txt){
+    if(saving||pending)return;
+    var remote=[];
+    try{remote=JSON.parse(txt||'[]');if(!Array.isArray(remote))remote=[];}catch(e){remote=[];}
+    var initialized=localStorage.getItem('plan-tfm-cloud-init')==='1';
+    if(!initialized&&done.size>0){
+      var merged=new Set(remote);
+      done.forEach(function(x){merged.add(x);});
+      done=merged;
+      localStorage.setItem('plan-tfm-cloud-init','1');
+      saveLocal();paint();flushCloud();
+    }else{
+      localStorage.setItem('plan-tfm-cloud-init','1');
+      done=new Set(remote);
+      saveLocal();paint();
+      status('☁️ Sincronizado (Móvil + PC)');
+    }
+  }).catch(function(){});
+}
+
 document.addEventListener('change',function(ev){
   var c=ev.target;
   if(!c||!c.matches||!c.matches('input[data-id]')){return;}
+  localStorage.setItem('plan-tfm-cloud-init','1');
   if(c.checked){done.add(c.dataset.id);}else{done.delete(c.dataset.id);}
-  paint();saveLocal();
+  paint();queueSave();
 });
 
-renderToday();renderDeliv();renderWeeks();renderMat();paint();
+window.addEventListener('focus',pullCloud);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)pullCloud();});
+
+try{
+  var es=new EventSource('https://ntfy.sh/'+NTFY_TOPIC+'/sse');
+  es.onmessage=function(ev){
+    if(saving||pending)return;
+    try{
+      var msg=JSON.parse(ev.data);
+      var inner=JSON.parse(msg.message||'{}');
+      if(inner.cid&&inner.cid!==CLIENT_ID&&Array.isArray(inner.done)){
+        done=new Set(inner.done);
+        saveLocal();paint();
+        status('☁️ Sincronizado en vivo');
+      }
+    }catch(e){}
+  };
+}catch(e){}
+
+renderToday();renderDeliv();renderWeeks();renderMat();paint();pullCloud();
 })();
 </script>
 </body>
